@@ -1,0 +1,554 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Hardened Primitives ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedSignedIn() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Used in allow list to prevent O(n) exists()/get() read cost explosions
+    function isBootstrappedAdmin() {
+      return isVerifiedSignedIn() && request.auth.token.email == 'moaviahassan124@gmail.com';
+    }
+
+    // Used in single-document get, create, update, delete
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isVerifiedSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidPakPhone(val) {
+      return val is string && val.size() >= 10 && val.size() <= 20 && val.matches('^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$');
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidAdminProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'organizationScope', 'grantedByUid', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'organizationScope', 'grantedByUid', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.displayName is string && data.displayName.size() >= 2 && data.displayName.size() <= 100
+        && data.organizationScope is string && data.organizationScope.size() <= 20 && data.organizationScope in ['both', 'hostel', 'institute']
+        && isValidId(data.grantedByUid)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidHostelInquiry(data) {
+      return data.keys().hasAll([
+          'applicantUid', 'fullName', 'mobileNumber', 'whatsappNumber', 'email',
+          'preferredBranch', 'preferredRoomType', 'occupantsCount', 'expectedMoveInDate',
+          'guardianName', 'guardianContact', 'additionalMessage', 'acceptedRules',
+          'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'applicantUid', 'fullName', 'mobileNumber', 'whatsappNumber', 'email',
+          'preferredBranch', 'preferredRoomType', 'occupantsCount', 'expectedMoveInDate',
+          'guardianName', 'guardianContact', 'additionalMessage', 'acceptedRules',
+          'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.applicantUid)
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 100
+        && isValidPakPhone(data.mobileNumber)
+        && isValidPakPhone(data.whatsappNumber)
+        && data.email is string && data.email.size() <= 160
+        && data.preferredBranch is string && data.preferredBranch.size() <= 80
+        && data.preferredBranch in ['Branch 1 — Satellite Town, Jhang', 'Branch 2 — Lalazar, Jhang']
+        && data.preferredRoomType is string && data.preferredRoomType.size() <= 80
+        && data.preferredRoomType in [
+          'Three-person sharing (PKR 15,000)',
+          'Two-person sharing (PKR 12,000)',
+          'Accommodation without food (PKR 7,000)'
+        ]
+        && data.occupantsCount is int && data.occupantsCount >= 1 && data.occupantsCount <= 3
+        && data.expectedMoveInDate is string && data.expectedMoveInDate.size() >= 8 && data.expectedMoveInDate.size() <= 20
+        && data.guardianName is string && data.guardianName.size() >= 2 && data.guardianName.size() <= 100
+        && isValidPakPhone(data.guardianContact)
+        && data.additionalMessage is string && data.additionalMessage.size() <= 1000
+        && data.acceptedRules is bool && data.acceptedRules == true
+        && data.status is string && data.status.size() <= 30
+        && data.status in ['New Inquiry', 'Under Review', 'Contacted', 'Confirmed', 'Closed']
+        && data.adminNotes is string && data.adminNotes.size() <= 1000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdmissionInquiry(data) {
+      return data.keys().hasAll([
+          'applicantUid', 'studentFullName', 'guardianName', 'phoneNumber', 'whatsappNumber',
+          'email', 'cityOrDistrict', 'interestedCourse', 'matricQualification',
+          'inquiryMessage', 'consentGiven', 'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'applicantUid', 'studentFullName', 'guardianName', 'phoneNumber', 'whatsappNumber',
+          'email', 'cityOrDistrict', 'interestedCourse', 'matricQualification',
+          'inquiryMessage', 'consentGiven', 'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.applicantUid)
+        && data.studentFullName is string && data.studentFullName.size() >= 2 && data.studentFullName.size() <= 100
+        && data.guardianName is string && data.guardianName.size() >= 2 && data.guardianName.size() <= 100
+        && isValidPakPhone(data.phoneNumber)
+        && isValidPakPhone(data.whatsappNumber)
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.cityOrDistrict is string && data.cityOrDistrict.size() >= 2 && data.cityOrDistrict.size() <= 100
+        && data.interestedCourse is string && data.interestedCourse.size() >= 2 && data.interestedCourse.size() <= 120
+        && data.matricQualification is string && data.matricQualification.size() <= 60
+        && data.matricQualification in [
+          'Matric Science (45% or above)',
+          'Matric Science (Awaiting Result)',
+          'Matric Arts / Other',
+          'FSc / Intermediate Completed'
+        ]
+        && data.inquiryMessage is string && data.inquiryMessage.size() <= 1000
+        && data.consentGiven is bool && data.consentGiven == true
+        && data.status is string && data.status.size() <= 30
+        && data.status in ['New Inquiry', 'Under Review', 'Contacted', 'Application Invited', 'Closed']
+        && data.adminNotes is string && data.adminNotes.size() <= 1000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdmissionApplication(data) {
+      return data.keys().hasAll([
+          'applicantUid', 'studentFullName', 'guardianName', 'gender', 'dateOfBirth',
+          'cnicOrBForm', 'contactNumber', 'whatsappNumber', 'email', 'residentialAddress',
+          'cityAndDistrict', 'matricBoard', 'passingYear', 'totalMarks', 'obtainedMarks',
+          'calculatedPercentage', 'selectedCourse', 'documentCount', 'consentGiven',
+          'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'applicantUid', 'studentFullName', 'guardianName', 'gender', 'dateOfBirth',
+          'cnicOrBForm', 'contactNumber', 'whatsappNumber', 'email', 'residentialAddress',
+          'cityAndDistrict', 'matricBoard', 'passingYear', 'totalMarks', 'obtainedMarks',
+          'calculatedPercentage', 'selectedCourse', 'documentCount', 'consentGiven',
+          'status', 'adminNotes', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.applicantUid)
+        && data.studentFullName is string && data.studentFullName.size() >= 2 && data.studentFullName.size() <= 100
+        && data.guardianName is string && data.guardianName.size() >= 2 && data.guardianName.size() <= 100
+        && data.gender is string && data.gender.size() <= 20 && data.gender in ['Female', 'Male', 'Other']
+        && data.dateOfBirth is string && data.dateOfBirth.size() >= 8 && data.dateOfBirth.size() <= 20
+        && data.cnicOrBForm is string && data.cnicOrBForm.size() >= 13 && data.cnicOrBForm.size() <= 18
+        && data.cnicOrBForm.matches('^[0-9]{5}\\-?[0-9]{7}\\-?[0-9]{1}$')
+        && isValidPakPhone(data.contactNumber)
+        && isValidPakPhone(data.whatsappNumber)
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.residentialAddress is string && data.residentialAddress.size() >= 5 && data.residentialAddress.size() <= 300
+        && data.cityAndDistrict is string && data.cityAndDistrict.size() >= 2 && data.cityAndDistrict.size() <= 100
+        && data.matricBoard is string && data.matricBoard.size() >= 2 && data.matricBoard.size() <= 100
+        && data.passingYear is int && data.passingYear >= 1990 && data.passingYear <= 2030
+        && data.totalMarks is int && data.totalMarks >= 100 && data.totalMarks <= 2000
+        && data.obtainedMarks is int && data.obtainedMarks >= 0 && data.obtainedMarks <= data.totalMarks
+        && data.calculatedPercentage is number && data.calculatedPercentage >= 0 && data.calculatedPercentage <= 100
+        && data.selectedCourse is string && data.selectedCourse.size() >= 2 && data.selectedCourse.size() <= 120
+        && data.documentCount is int && data.documentCount >= 0 && data.documentCount <= 4
+        && data.consentGiven is bool && data.consentGiven == true
+        && data.status is string && data.status.size() <= 30
+        && data.status in ['Submitted', 'Under Review', 'Documents Required', 'Accepted', 'Rejected']
+        && data.adminNotes is string && data.adminNotes.size() <= 1000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidApplicationDocument(data) {
+      return data.keys().hasAll([
+          'applicantUid', 'applicationId', 'docType', 'fileName', 'mimeType', 'sizeBytes', 'dataUrl', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'applicantUid', 'applicationId', 'docType', 'fileName', 'mimeType', 'sizeBytes', 'dataUrl', 'createdAt'
+        ])
+        && isValidId(data.applicantUid)
+        && isValidId(data.applicationId)
+        && data.docType is string && data.docType.size() <= 40
+        && data.docType in ['matric_result', 'student_cnic', 'guardian_cnic', 'passport_photo']
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 140
+        && data.mimeType is string && data.mimeType.size() <= 50
+        && data.mimeType in ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+        && data.sizeBytes is int && data.sizeBytes > 0 && data.sizeBytes <= 220000
+        && data.dataUrl is string && data.dataUrl.size() >= 20 && data.dataUrl.size() <= 320000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidContactMessage(data) {
+      return data.keys().hasAll([
+          'applicantUid', 'organization', 'fullName', 'phone', 'email', 'subject', 'message', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'applicantUid', 'organization', 'fullName', 'phone', 'email', 'subject', 'message', 'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.applicantUid)
+        && data.organization is string && data.organization.size() <= 20 && data.organization in ['hostel', 'institute', 'general']
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 100
+        && isValidPakPhone(data.phone)
+        && data.email is string && data.email.size() <= 160
+        && data.subject is string && data.subject.size() >= 2 && data.subject.size() <= 140
+        && data.message is string && data.message.size() >= 5 && data.message.size() <= 1500
+        && data.status is string && data.status.size() <= 20 && data.status in ['New', 'Replied', 'Closed']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRoomPricing(data) {
+      return data.keys().hasAll([
+          'title', 'pricePkr', 'billingPeriod', 'availabilityNote', 'summary', 'visibility', 'sortOrder', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title', 'pricePkr', 'billingPeriod', 'availabilityNote', 'summary', 'visibility', 'sortOrder', 'createdAt', 'updatedAt'
+        ])
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 100
+        && data.pricePkr is int && data.pricePkr >= 0 && data.pricePkr <= 500000
+        && data.billingPeriod is string && data.billingPeriod.size() <= 50
+        && data.billingPeriod in ['per month', 'one-time refundable/admission deposit']
+        && data.availabilityNote is string && data.availabilityNote.size() >= 2 && data.availabilityNote.size() <= 160
+        && data.summary is string && data.summary.size() >= 5 && data.summary.size() <= 400
+        && data.visibility is string && data.visibility.size() <= 20 && data.visibility in ['public', 'archived']
+        && data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 100
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCourseCatalogItem(data) {
+      return data.keys().hasAll([
+          'title', 'category', 'durationLabel', 'overview', 'admissionOpen', 'visibility', 'sortOrder', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title', 'category', 'durationLabel', 'overview', 'admissionOpen', 'visibility', 'sortOrder', 'createdAt', 'updatedAt'
+        ])
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 120
+        && data.category is string && data.category.size() <= 20 && data.category in ['principal', 'additional']
+        && data.durationLabel is string && data.durationLabel.size() >= 2 && data.durationLabel.size() <= 80
+        && data.overview is string && data.overview.size() >= 10 && data.overview.size() <= 600
+        && data.admissionOpen is bool
+        && data.visibility is string && data.visibility.size() <= 20 && data.visibility in ['public', 'archived']
+        && data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 200
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidGalleryMediaItem(data) {
+      return data.keys().hasAll([
+          'organization', 'title', 'category', 'sourceClassification', 'mediaUrl', 'description', 'visibility', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'organization', 'title', 'category', 'sourceClassification', 'mediaUrl', 'description', 'visibility', 'createdAt', 'updatedAt'
+        ])
+        && data.organization is string && data.organization.size() <= 20 && data.organization in ['hostel', 'institute']
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 120
+        && data.category is string && data.category.size() >= 2 && data.category.size() <= 40
+        && data.sourceClassification is string && data.sourceClassification.size() <= 40
+        && data.sourceClassification in ['real_campus_photo', 'official_poster', 'illustrative_visual', 'promotional_video']
+        && data.mediaUrl is string && data.mediaUrl.size() >= 5 && data.mediaUrl.size() <= 500
+        && data.description is string && data.description.size() >= 5 && data.description.size() <= 400
+        && data.visibility is string && data.visibility.size() <= 20 && data.visibility in ['public', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSiteSetting(data) {
+      return data.keys().hasAll([
+          'organization', 'primaryPhone', 'secondaryPhone', 'whatsappPhone',
+          'addressSummary', 'announcementBanner', 'regulatoryReviewNote',
+          'rulesList', 'videoUrl', 'videoSummary', 'visibility', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'organization', 'primaryPhone', 'secondaryPhone', 'whatsappPhone',
+          'addressSummary', 'announcementBanner', 'regulatoryReviewNote',
+          'rulesList', 'videoUrl', 'videoSummary', 'visibility', 'createdAt', 'updatedAt'
+        ])
+        && data.organization is string && data.organization.size() <= 20 && data.organization in ['hostel', 'institute']
+        && data.primaryPhone is string && data.primaryPhone.size() >= 10 && data.primaryPhone.size() <= 20
+        && data.secondaryPhone is string && data.secondaryPhone.size() >= 10 && data.secondaryPhone.size() <= 20
+        && data.whatsappPhone is string && data.whatsappPhone.size() >= 10 && data.whatsappPhone.size() <= 20
+        && data.addressSummary is string && data.addressSummary.size() >= 5 && data.addressSummary.size() <= 300
+        && data.announcementBanner is string && data.announcementBanner.size() >= 2 && data.announcementBanner.size() <= 240
+        && data.regulatoryReviewNote is string && data.regulatoryReviewNote.size() <= 600
+        && data.rulesList is list && data.rulesList.size() <= 15
+        && (data.rulesList.size() == 0 || (data.rulesList[0] is string && data.rulesList[0].size() <= 300))
+        && data.videoUrl is string && data.videoUrl.size() <= 500
+        && data.videoSummary is string && data.videoSummary.size() <= 600
+        && data.visibility is string && data.visibility.size() <= 20 && data.visibility in ['public', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    // 1. Admins Registry
+    match /admins/{adminId} {
+      allow get: if isVerifiedSignedIn() && isValidId(adminId) && (request.auth.uid == adminId || isAdmin());
+      allow list: if isBootstrappedAdmin() || (isVerifiedSignedIn() && existing().uid == request.auth.uid);
+      allow create: if isBootstrappedAdmin()
+        && isValidId(adminId)
+        && isValidAdminProfile(incoming())
+        && incoming().uid == adminId
+        && incoming().grantedByUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isBootstrappedAdmin()
+        && isValidId(adminId)
+        && isValidAdminProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().grantedByUid == existing().grantedByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'organizationScope', 'updatedAt']);
+      allow delete: if isBootstrappedAdmin() && isValidId(adminId);
+    }
+
+    // 2. Hostel Accommodation Inquiries (Contains PII)
+    match /hostelInquiries/{inquiryId} {
+      allow get: if isVerifiedSignedIn() && isValidId(inquiryId) && (existing().applicantUid == request.auth.uid || isAdmin());
+      allow list: if (isVerifiedSignedIn() && existing().applicantUid == request.auth.uid) || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(inquiryId)
+        && isValidHostelInquiry(incoming())
+        && incoming().applicantUid == request.auth.uid
+        && incoming().status == 'New Inquiry'
+        && incoming().adminNotes == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedSignedIn()
+        && isValidId(inquiryId)
+        && isValidHostelInquiry(incoming())
+        && incoming().applicantUid == existing().applicantUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Admin Status & Notes Review (includes override on terminal state)
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminNotes', 'updatedAt']))
+          ||
+          // Action 2: Applicant Note Update (only while New Inquiry and non-terminal)
+          (existing().applicantUid == request.auth.uid
+            && existing().status == 'New Inquiry'
+            && incoming().status == existing().status
+            && incoming().adminNotes == existing().adminNotes
+            && incoming().diff(existing()).affectedKeys().hasOnly(['additionalMessage', 'expectedMoveInDate', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(inquiryId);
+    }
+
+    // 2b. Paramedical Institute Student Admission Inquiries (Contains PII)
+    match /admissionInquiries/{inquiryId} {
+      allow get: if isVerifiedSignedIn() && isValidId(inquiryId) && (existing().applicantUid == request.auth.uid || isAdmin());
+      allow list: if (isVerifiedSignedIn() && existing().applicantUid == request.auth.uid) || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(inquiryId)
+        && isValidAdmissionInquiry(incoming())
+        && incoming().applicantUid == request.auth.uid
+        && incoming().status == 'New Inquiry'
+        && incoming().adminNotes == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedSignedIn()
+        && isValidId(inquiryId)
+        && isValidAdmissionInquiry(incoming())
+        && incoming().applicantUid == existing().applicantUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Admin Status & Admissions Review (includes override on terminal state)
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminNotes', 'updatedAt']))
+          ||
+          // Action 2: Applicant Inquiry Refinement (only while New Inquiry and non-terminal)
+          (existing().applicantUid == request.auth.uid
+            && existing().status == 'New Inquiry'
+            && incoming().status == existing().status
+            && incoming().adminNotes == existing().adminNotes
+            && incoming().diff(existing()).affectedKeys().hasOnly(['inquiryMessage', 'interestedCourse', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(inquiryId);
+    }
+
+    // 3. Paramedical Institute Online Admission Applications (Contains PII)
+    match /admissionApplications/{applicationId} {
+      allow get: if isVerifiedSignedIn() && isValidId(applicationId) && (existing().applicantUid == request.auth.uid || isAdmin());
+      allow list: if (isVerifiedSignedIn() && existing().applicantUid == request.auth.uid) || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(applicationId)
+        && isValidAdmissionApplication(incoming())
+        && incoming().applicantUid == request.auth.uid
+        && incoming().status == 'Submitted'
+        && incoming().adminNotes == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedSignedIn()
+        && isValidId(applicationId)
+        && isValidAdmissionApplication(incoming())
+        && incoming().applicantUid == existing().applicantUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Admin Admission Status & Remarks Update
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminNotes', 'updatedAt']))
+          ||
+          // Action 2: Applicant Document Count Sync while non-terminal
+          (existing().applicantUid == request.auth.uid
+            && !(existing().status in ['Accepted', 'Rejected'])
+            && incoming().status == existing().status
+            && incoming().adminNotes == existing().adminNotes
+            && incoming().diff(existing()).affectedKeys().hasOnly(['documentCount', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(applicationId);
+
+      // 3b. Private Educational & Identity Documents Subcollection (Master Gate)
+      match /documents/{docId} {
+        allow get: if isVerifiedSignedIn()
+          && isValidId(applicationId)
+          && isValidId(docId)
+          && (
+            get(/databases/$(database)/documents/admissionApplications/$(applicationId)).data.applicantUid == request.auth.uid
+            || isAdmin()
+          );
+        allow list: if (isVerifiedSignedIn() && existing().applicantUid == request.auth.uid) || isBootstrappedAdmin();
+        allow create: if isVerifiedSignedIn()
+          && isValidId(applicationId)
+          && isValidId(docId)
+          && isValidApplicationDocument(incoming())
+          && incoming().applicantUid == request.auth.uid
+          && incoming().applicationId == applicationId
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/admissionApplications/$(applicationId))
+          && get(/databases/$(database)/documents/admissionApplications/$(applicationId)).data.applicantUid == request.auth.uid;
+        allow update: if false;
+        allow delete: if isAdmin() && isValidId(applicationId) && isValidId(docId);
+      }
+    }
+
+    // 4. General & Organization Contact Messages (Contains PII)
+    match /contactMessages/{messageId} {
+      allow get: if isVerifiedSignedIn() && isValidId(messageId) && (existing().applicantUid == request.auth.uid || isAdmin());
+      allow list: if (isVerifiedSignedIn() && existing().applicantUid == request.auth.uid) || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(messageId)
+        && isValidContactMessage(incoming())
+        && incoming().applicantUid == request.auth.uid
+        && incoming().status == 'New'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedSignedIn()
+        && isValidId(messageId)
+        && isValidContactMessage(incoming())
+        && incoming().applicantUid == existing().applicantUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(messageId);
+    }
+
+    // 5. Public Hostel Room Pricing Tiers
+    match /roomPricing/{pricingId} {
+      allow get: if isValidId(pricingId) && (existing().visibility == 'public' || isAdmin());
+      allow list: if existing().visibility == 'public' || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(pricingId)
+        && isValidRoomPricing(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerifiedSignedIn()
+        && isValidId(pricingId)
+        && isValidRoomPricing(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'pricePkr', 'billingPeriod', 'availabilityNote', 'summary', 'visibility', 'sortOrder', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(pricingId);
+    }
+
+    // 6. Public Paramedical Course Catalog
+    match /courses/{courseId} {
+      allow get: if isValidId(courseId) && (existing().visibility == 'public' || isAdmin());
+      allow list: if existing().visibility == 'public' || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(courseId)
+        && isValidCourseCatalogItem(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerifiedSignedIn()
+        && isValidId(courseId)
+        && isValidCourseCatalogItem(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'category', 'durationLabel', 'overview', 'admissionOpen', 'visibility', 'sortOrder', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(courseId);
+    }
+
+    // 7. Public Gallery Media Items
+    match /galleryItems/{itemId} {
+      allow get: if isValidId(itemId) && (existing().visibility == 'public' || isAdmin());
+      allow list: if existing().visibility == 'public' || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(itemId)
+        && isValidGalleryMediaItem(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerifiedSignedIn()
+        && isValidId(itemId)
+        && isValidGalleryMediaItem(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'category', 'sourceClassification', 'mediaUrl', 'description', 'visibility', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(itemId);
+    }
+
+    // 8. Public Organizational Site Settings
+    match /siteSettings/{settingId} {
+      allow get: if isValidId(settingId) && (existing().visibility == 'public' || isAdmin());
+      allow list: if existing().visibility == 'public' || isBootstrappedAdmin();
+      allow create: if isVerifiedSignedIn()
+        && isValidId(settingId)
+        && isValidSiteSetting(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerifiedSignedIn()
+        && isValidId(settingId)
+        && isValidSiteSetting(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'primaryPhone', 'secondaryPhone', 'whatsappPhone', 'addressSummary',
+          'announcementBanner', 'regulatoryReviewNote', 'rulesList', 'videoUrl',
+          'videoSummary', 'visibility', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(settingId);
+    }
+  }
+}

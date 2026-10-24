@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Hostel Residential Palette: Navy, Gold, Warm Cream, Burgundy */
+  --color-hostel-navy: #0f2342;
+  --color-hostel-navy-deep: #09172e;
+  --color-hostel-gold: #b4832e;
+  --color-hostel-gold-light: #f5ebd6;
+  --color-hostel-cream: #fbf8f1;
+  --color-hostel-burgundy: #6e1e32;
+
+  /* Paramedical Institute Palette: Medical Blue, Clinical Teal, Soft Emerald */
+  --color-inst-blue: #0b3b60;
+  --color-inst-blue-deep: #072842;
+  --color-inst-teal: #0d7a78;
+  --color-inst-teal-soft: #eef7f7;
+  --color-inst-green: #15803d;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+    color: #0f172a;
+    background-color: #faf8f4;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-serif);
+    text-wrap: balance;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

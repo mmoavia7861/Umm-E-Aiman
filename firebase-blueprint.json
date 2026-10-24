@@ -1,0 +1,884 @@
+{
+  "entities": {
+    "AdminProfile": {
+      "title": "AdminProfile",
+      "description": "Authorized administrator account record granted access by a bootstrapped administrator.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the administrator."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Verified email address of the administrator."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Full name of the administrator."
+        },
+        "organizationScope": {
+          "type": "string",
+          "enum": ["both", "hostel", "institute"],
+          "maxLength": 20,
+          "description": "Administrative scope across Umm-e-Aiman entities."
+        },
+        "grantedByUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the administrator who created this record."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when admin access was granted."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last update."
+        }
+      },
+      "required": ["uid", "email", "displayName", "organizationScope", "grantedByUid", "createdAt", "updatedAt"]
+    },
+    "HostelInquiry": {
+      "title": "HostelInquiry",
+      "description": "Accommodation booking inquiry submitted for Umm-e-Aiman Girls Hostel in Jhang.",
+      "type": "object",
+      "properties": {
+        "applicantUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Authenticated user UID of the applicant."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Full name of the student."
+        },
+        "mobileNumber": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "Student Pakistani mobile phone number."
+        },
+        "whatsappNumber": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "Student Pakistani WhatsApp number."
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Optional email address."
+        },
+        "preferredBranch": {
+          "type": "string",
+          "enum": ["Branch 1 — Satellite Town, Jhang", "Branch 2 — Lalazar, Jhang"],
+          "maxLength": 80,
+          "description": "Preferred hostel branch in Jhang."
+        },
+        "preferredRoomType": {
+          "type": "string",
+          "enum": ["Three-person sharing (PKR 15,000)", "Two-person sharing (PKR 12,000)", "Accommodation without food (PKR 7,000)"],
+          "maxLength": 80,
+          "description": "Preferred room sharing option."
+        },
+        "occupantsCount": {
+          "type": "integer",
+          "description": "Number of occupants requested (1 to 3)."
+        },
+        "expectedMoveInDate": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 20,
+          "description": "Expected move-in date in YYYY-MM-DD format."
+        },
+        "guardianName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Father or guardian full name."
+        },
+        "guardianContact": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "Guardian Pakistani contact number."
+        },
+        "additionalMessage": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Optional additional inquiry notes."
+        },
+        "acceptedRules": {
+          "type": "boolean",
+          "description": "Confirmation that hostel rules and regulations were read and understood."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["New Inquiry", "Under Review", "Contacted", "Confirmed", "Closed"],
+          "maxLength": 30,
+          "description": "Administrative review status."
+        },
+        "adminNotes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Internal administrator review notes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of submission."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "applicantUid",
+        "fullName",
+        "mobileNumber",
+        "whatsappNumber",
+        "email",
+        "preferredBranch",
+        "preferredRoomType",
+        "occupantsCount",
+        "expectedMoveInDate",
+        "guardianName",
+        "guardianContact",
+        "additionalMessage",
+        "acceptedRules",
+        "status",
+        "adminNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdmissionApplication": {
+      "title": "AdmissionApplication",
+      "description": "Online admission application submitted to Umm-e-Aiman Paramedical Institute, Bhowana.",
+      "type": "object",
+      "properties": {
+        "applicantUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Authenticated user UID of the applicant."
+        },
+        "studentFullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Full name of the student."
+        },
+        "guardianName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Father or guardian name."
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["Female", "Male", "Other"],
+          "maxLength": 20,
+          "description": "Applicant gender."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 20,
+          "description": "Date of birth in YYYY-MM-DD format."
+        },
+        "cnicOrBForm": {
+          "type": "string",
+          "minLength": 13,
+          "maxLength": 18,
+          "pattern": "^[0-9]{5}\\-?[0-9]{7}\\-?[0-9]{1}$",
+          "description": "Pakistani 13-digit CNIC or B-Form number."
+        },
+        "contactNumber": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "Primary mobile number."
+        },
+        "whatsappNumber": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "WhatsApp number."
+        },
+        "email": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Applicant email address."
+        },
+        "residentialAddress": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 300,
+          "description": "Complete residential address."
+        },
+        "cityAndDistrict": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "City and District."
+        },
+        "matricBoard": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Matriculation examination board."
+        },
+        "passingYear": {
+          "type": "integer",
+          "description": "Matriculation passing year."
+        },
+        "totalMarks": {
+          "type": "integer",
+          "description": "Total Matriculation marks."
+        },
+        "obtainedMarks": {
+          "type": "integer",
+          "description": "Obtained Matriculation marks."
+        },
+        "calculatedPercentage": {
+          "type": "number",
+          "description": "Calculated Matriculation percentage."
+        },
+        "selectedCourse": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Selected medical diploma or healthcare course."
+        },
+        "documentCount": {
+          "type": "integer",
+          "description": "Count of uploaded supporting documents in private subcollection."
+        },
+        "consentGiven": {
+          "type": "boolean",
+          "description": "Applicant consent for admission review."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Submitted", "Under Review", "Documents Required", "Accepted", "Rejected"],
+          "maxLength": 30,
+          "description": "Administrative admission application status."
+        },
+        "adminNotes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Internal administrator remarks."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of submission."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "applicantUid",
+        "studentFullName",
+        "guardianName",
+        "gender",
+        "dateOfBirth",
+        "cnicOrBForm",
+        "contactNumber",
+        "whatsappNumber",
+        "email",
+        "residentialAddress",
+        "cityAndDistrict",
+        "matricBoard",
+        "passingYear",
+        "totalMarks",
+        "obtainedMarks",
+        "calculatedPercentage",
+        "selectedCourse",
+        "documentCount",
+        "consentGiven",
+        "status",
+        "adminNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ApplicationDocument": {
+      "title": "ApplicationDocument",
+      "description": "Private educational or identity document attached to an AdmissionApplication.",
+      "type": "object",
+      "properties": {
+        "applicantUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the student who uploaded the document."
+        },
+        "applicationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Parent admission application ID."
+        },
+        "docType": {
+          "type": "string",
+          "enum": ["matric_result", "student_cnic", "guardian_cnic", "passport_photo"],
+          "maxLength": 40,
+          "description": "Document category."
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140,
+          "description": "Sanitized original filename."
+        },
+        "mimeType": {
+          "type": "string",
+          "enum": ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+          "maxLength": 50,
+          "description": "Verified MIME type."
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "description": "Size of encoded file in bytes (<= 220000)."
+        },
+        "dataUrl": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 320000,
+          "description": "Base64 data URL stored privately for authorized review."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Upload timestamp."
+        }
+      },
+      "required": ["applicantUid", "applicationId", "docType", "fileName", "mimeType", "sizeBytes", "dataUrl", "createdAt"]
+    },
+    "AdmissionInquiry": {
+      "title": "AdmissionInquiry",
+      "description": "Secure student admission inquiry submitted on the Umm-e-Aiman Paramedical Institute page in Bhowana.",
+      "type": "object",
+      "properties": {
+        "applicantUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Verified Firebase Auth UID of the inquiring student or parent."
+        },
+        "studentFullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Full name of the prospective student."
+        },
+        "guardianName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Father or guardian full name."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "Primary Pakistani mobile contact number."
+        },
+        "whatsappNumber": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "Pakistani WhatsApp number for admissions follow-up."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 160,
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "description": "Verified email address of the student or parent."
+        },
+        "cityOrDistrict": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Applicant city and district."
+        },
+        "interestedCourse": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Selected medical diploma or allied health program of interest."
+        },
+        "matricQualification": {
+          "type": "string",
+          "enum": [
+            "Matric Science (45% or above)",
+            "Matric Science (Awaiting Result)",
+            "Matric Arts / Other",
+            "FSc / Intermediate Completed"
+          ],
+          "maxLength": 60,
+          "description": "Current academic background reported by the student."
+        },
+        "inquiryMessage": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Optional questions regarding courses, practical labs, or session schedules."
+        },
+        "consentGiven": {
+          "type": "boolean",
+          "description": "Explicit consent allowing Bhowana institute admissions staff to contact the applicant."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["New Inquiry", "Under Review", "Contacted", "Application Invited", "Closed"],
+          "maxLength": 30,
+          "description": "Administrative follow-up workflow status."
+        },
+        "adminNotes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Internal admissions office review notes."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the inquiry was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest update."
+        }
+      },
+      "required": [
+        "applicantUid",
+        "studentFullName",
+        "guardianName",
+        "phoneNumber",
+        "whatsappNumber",
+        "email",
+        "cityOrDistrict",
+        "interestedCourse",
+        "matricQualification",
+        "inquiryMessage",
+        "consentGiven",
+        "status",
+        "adminNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "General or organization-specific inquiry message.",
+      "type": "object",
+      "properties": {
+        "applicantUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Sender UID."
+        },
+        "organization": {
+          "type": "string",
+          "enum": ["hostel", "institute", "general"],
+          "maxLength": 20,
+          "description": "Target organization."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Sender full name."
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "pattern": "^(\\+92|0)?3[0-9]{2}[\\- ]?[0-9]{7}$",
+          "description": "Sender Pakistani phone number."
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Optional email address."
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 140,
+          "description": "Inquiry subject."
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 1500,
+          "description": "Inquiry message body."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["New", "Replied", "Closed"],
+          "maxLength": 20,
+          "description": "Review status."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp."
+        }
+      },
+      "required": ["applicantUid", "organization", "fullName", "phone", "email", "subject", "message", "status", "createdAt", "updatedAt"]
+    },
+    "RoomPricing": {
+      "title": "RoomPricing",
+      "description": "Public hostel room accommodation tier managed by administrators.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Accommodation tier name."
+        },
+        "pricePkr": {
+          "type": "integer",
+          "description": "Advertised monthly or deposit amount in PKR."
+        },
+        "billingPeriod": {
+          "type": "string",
+          "enum": ["per month", "one-time refundable/admission deposit"],
+          "maxLength": 50,
+          "description": "Billing cycle label."
+        },
+        "availabilityNote": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160,
+          "description": "Availability status note."
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 400,
+          "description": "Summary of facilities for this tier."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "archived"],
+          "maxLength": 20,
+          "description": "Public visibility flag."
+        },
+        "sortOrder": {
+          "type": "integer",
+          "description": "Display order."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Update timestamp."
+        }
+      },
+      "required": ["title", "pricePkr", "billingPeriod", "availabilityNote", "summary", "visibility", "sortOrder", "createdAt", "updatedAt"]
+    },
+    "CourseCatalogItem": {
+      "title": "CourseCatalogItem",
+      "description": "Medical diploma or paramedical training course managed by administrators.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Official course title."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["principal", "additional"],
+          "maxLength": 20,
+          "description": "Principal advertised program vs additional advertised program."
+        },
+        "durationLabel": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Confirmed duration or subject-to-confirmation note."
+        },
+        "overview": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 600,
+          "description": "Program overview."
+        },
+        "admissionOpen": {
+          "type": "boolean",
+          "description": "Whether admissions inquiries are currently open."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "archived"],
+          "maxLength": 20,
+          "description": "Public visibility flag."
+        },
+        "sortOrder": {
+          "type": "integer",
+          "description": "Display order."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Update timestamp."
+        }
+      },
+      "required": ["title", "category", "durationLabel", "overview", "admissionOpen", "visibility", "sortOrder", "createdAt", "updatedAt"]
+    },
+    "GalleryMediaItem": {
+      "title": "GalleryMediaItem",
+      "description": "Public media gallery photograph, poster, or video entry for Hostel or Institute.",
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "enum": ["hostel", "institute"],
+          "maxLength": 20,
+          "description": "Owning organization."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Caption title."
+        },
+        "category": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40,
+          "description": "Filter category."
+        },
+        "sourceClassification": {
+          "type": "string",
+          "enum": ["real_campus_photo", "official_poster", "illustrative_visual", "promotional_video"],
+          "maxLength": 40,
+          "description": "Explicitly distinguishes real photographs from illustrative visuals."
+        },
+        "mediaUrl": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 500,
+          "description": "Asset path or URL."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 400,
+          "description": "Detailed caption."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "archived"],
+          "maxLength": 20,
+          "description": "Visibility state."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Update timestamp."
+        }
+      },
+      "required": ["organization", "title", "category", "sourceClassification", "mediaUrl", "description", "visibility", "createdAt", "updatedAt"]
+    },
+    "SiteSetting": {
+      "title": "SiteSetting",
+      "description": "Public organizational contact details, rules, video metadata, and accreditation review notes.",
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "enum": ["hostel", "institute"],
+          "maxLength": 20,
+          "description": "Target organization."
+        },
+        "primaryPhone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "description": "Primary inquiry phone."
+        },
+        "secondaryPhone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "description": "Secondary inquiry phone."
+        },
+        "whatsappPhone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 20,
+          "description": "Primary WhatsApp number."
+        },
+        "addressSummary": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 300,
+          "description": "Official address summary."
+        },
+        "announcementBanner": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 240,
+          "description": "Admissions or availability announcement text."
+        },
+        "regulatoryReviewNote": {
+          "type": "string",
+          "maxLength": 600,
+          "description": "Administrator review note for accreditation references and source discrepancies."
+        },
+        "rulesList": {
+          "type": "array",
+          "description": "Bounded list (max 15) of official regulations."
+        },
+        "videoUrl": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Featured promotional video path."
+        },
+        "videoSummary": {
+          "type": "string",
+          "maxLength": 600,
+          "description": "English summary of the promotional video."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "archived"],
+          "maxLength": 20,
+          "description": "Visibility flag."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Update timestamp."
+        }
+      },
+      "required": [
+        "organization",
+        "primaryPhone",
+        "secondaryPhone",
+        "whatsappPhone",
+        "addressSummary",
+        "announcementBanner",
+        "regulatoryReviewNote",
+        "rulesList",
+        "videoUrl",
+        "videoSummary",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": "AdminProfile",
+      "description": "Authorized administrator registry."
+    },
+    "/hostelInquiries/{inquiryId}": {
+      "schema": "HostelInquiry",
+      "description": "Private hostel room booking inquiries containing student and guardian PII."
+    },
+    "/admissionApplications/{applicationId}": {
+      "schema": "AdmissionApplication",
+      "description": "Private paramedical institute online admission applications."
+    },
+    "/admissionApplications/{applicationId}/documents/{docId}": {
+      "schema": "ApplicationDocument",
+      "description": "Private identity and academic documents linked to an admission application."
+    },
+    "/admissionInquiries/{inquiryId}": {
+      "schema": "AdmissionInquiry",
+      "description": "Private paramedical institute student admission inquiries containing student and guardian contact PII."
+    },
+    "/contactMessages/{messageId}": {
+      "schema": "ContactMessage",
+      "description": "Private contact messages submitted to hostel or institute management."
+    },
+    "/roomPricing/{pricingId}": {
+      "schema": "RoomPricing",
+      "description": "Public hostel room accommodation pricing tiers."
+    },
+    "/courses/{courseId}": {
+      "schema": "CourseCatalogItem",
+      "description": "Public paramedical diploma and healthcare course catalog."
+    },
+    "/galleryItems/{itemId}": {
+      "schema": "GalleryMediaItem",
+      "description": "Public photo, poster, and video gallery entries."
+    },
+    "/siteSettings/{settingId}": {
+      "schema": "SiteSetting",
+      "description": "Public organizational settings, rules, video metadata, and accreditation notes."
+    }
+  }
+}

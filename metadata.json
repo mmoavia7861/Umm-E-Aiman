@@ -1,0 +1,6 @@
+{
+  "name": "Umm-e-Aiman – Girls Hostel & Paramedical Institute",
+  "description": "Official portal for Umm-e-Aiman Girls Hostel in Jhang and Umm-e-Aiman Paramedical Institute in Bhowana, Chiniot. Explore student rooms and medical diplomas.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
